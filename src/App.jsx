@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 
 const SUPABASE_URL = 'https://whgidbsuxbtlxowdcdvx.supabase.co'
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || ''
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
+const supabase = SUPABASE_KEY ? createClient(SUPABASE_URL, SUPABASE_KEY) : null
 
 const initialForm = { fullName: '', email: '', password: '', confirmPassword: '' }
 
@@ -11,11 +11,13 @@ function App() {
   const [mode, setMode] = useState('signup')
   const [form, setForm] = useState(initialForm)
   const [user, setUser] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(Boolean(supabase))
   const [submitting, setSubmitting] = useState(false)
   const [message, setMessage] = useState(null)
 
   useEffect(() => {
+    if (!supabase) return undefined
+
     supabase.auth.getSession().then(({ data }) => {
       setUser(data.session?.user ?? null)
       setLoading(false)
@@ -53,7 +55,7 @@ function App() {
     event.preventDefault()
     setMessage(null)
 
-    if (!SUPABASE_KEY) {
+    if (!supabase) {
       setMessage({ type: 'error', text: 'Configure a variável VITE_SUPABASE_PUBLISHABLE_KEY antes de executar o cadastro.' })
       return
     }
@@ -103,7 +105,7 @@ function App() {
   }
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
+    await supabase?.auth.signOut()
     setMode('signup')
     setForm(initialForm)
     setMessage({ type: 'success', text: 'Você saiu da conta.' })
